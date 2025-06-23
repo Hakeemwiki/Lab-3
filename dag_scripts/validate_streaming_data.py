@@ -35,4 +35,10 @@ def list_files():
     return [obj['Key'] for obj in response.get('Contents', []) if obj['Key'].endswith('.csv')]
 
 
+# Function to infer file type based on the key
+def infer_file_type(key):
+    if 'songs' in key: return 'songs'
+    elif 'streams' in key: return 'streams'
+    elif 'users' in key: return 'users'
+    return None
 
