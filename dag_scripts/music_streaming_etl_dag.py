@@ -103,3 +103,39 @@ wait_for_data = S3KeySensor(
     timeout=3600, # How long to wait for new data (1 hour)
     dag=dag
 )
+
+validate_task = PythonOperator(
+    task_id='validate_data',
+    python_callable=lambda: run_glue_job('validate_streaming_data'),
+    dag=dag,
+)
+
+branch_task = BranchPythonOperator(
+    task_id='branch_after_validation',
+    python_callable=check_validation,
+    dag=dag,
+)
+
+transform_task = PythonOperator(
+    task_id='transform_metrics',
+    python_callable=lambda: run_glue_job('transform_streaming_metrics'),
+    dag=dag,
+)
+
+load_task = PythonOperator(
+    task_id='load_to_dynamodb',
+    python_callable=lambda: run_glue_job('load_to_dynamodb'),
+    dag=dag,
+)
+
+archive_task = PythonOperator(
+    task_id='archive_file',
+    python_callable=archive_processed_files,
+    dag=dag,
+)
+
+end_task = DummyOperator(task_id='end_pipeline', dag=dag)
+
+wait_for_data >> validate_task >> branch_task
+branch_task >> transform_task >> load_task >> archive_task
+branch_task >> end_task
