@@ -17,5 +17,9 @@ USERS_KEY = 'validated/users.csv'
 # Initialize Spark session
 spark = SparkSession.builder.appName("TransformKPIs").getOrCreate()
 
-
+# Read validated data from S3
+logger.info("Reading validated data from S3")
+songs_df = spark.read.option("header", True).csv(f"s3://{BUCKET}/{SONGS_KEY}")
+streams_df = spark.read.option("header", True).csv(f"s3://{BUCKET}/{STREAMS_KEY}")
+users_df = spark.read.option("header", True).csv(f"s3://{BUCKET}/{USERS_KEY}")
 
