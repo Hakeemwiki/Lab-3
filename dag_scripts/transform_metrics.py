@@ -34,3 +34,12 @@ streams_df = streams_df.withColumn("date", to_date("listen_time"))
 # Join all three datasets
 joined_df = streams_df.join(songs_df, on="track_id", how="inner").join(users_df, on="user_id", how="left")
 joined_df = joined_df.withColumn("duration_ms", col("duration_ms").cast("long"))
+
+
+# Aggregate genre-level KPIs
+genre_kpi_df = joined_df.groupBy("track_genre", "date").agg(
+    countDistinct("user_id").alias("unique_listeners"),
+    _sum("duration_ms").alias("total_listening_time"),
+    countDistinct("track_id").alias("total_tracks"),
+    countDistinct("listen_time").alias("total_streams")
+)
