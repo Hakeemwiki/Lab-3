@@ -89,3 +89,10 @@ def main():
         logger.warning("Validation report written to logs/invalid/report.txt")
     else:
         logger.info("All incoming files passed schema validation.")
+
+
+# Ensure the script runs only when executed directly
+if __name__ == "__main__":
+    logger.info("Starting validation script")
+    main()
+    logger.info("Validation script completed")
