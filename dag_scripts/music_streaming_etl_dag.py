@@ -45,3 +45,22 @@ def run_glue_job(job_name):
     logger.info(f"Glue job {job_name} completed successfully.")
 
 
+def archive_processed_files():
+    # Archives processed CSV files from the S3 bucket.
+    s3_client = boto3.client('s3')
+    bucket = 'music-stream-data-dynamo' # S3 bucket name
+    prefix = 'incoming/' # Prefix for incoming files
+    archive_prefix = 'archive/' # Prefix for archived files
+
+    logger.info("Archiving processed CSV files")
+    response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
+    for obj in response.get('Contents', []): # List objects in the specified bucket and prefix
+        key = obj['Key']
+        if key.endswith('.csv'): # Check if the object is a CSV file
+            archive_key = key.replace('incoming/', 'archive/') 
+            s3_client.copy_object(Bucket=bucket, CopySource={'Bucket': bucket, 'Key': key}, Key=archive_key)
+            s3_client.delete_object(Bucket=bucket, Key=key) # Delete the original file after copying it to the archive
+            logger.info(f"Archived: {key}")
+
+
+
