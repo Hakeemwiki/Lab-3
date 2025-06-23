@@ -43,3 +43,23 @@ genre_kpi_df = joined_df.groupBy("track_genre", "date").agg(
     countDistinct("track_id").alias("total_tracks"),
     countDistinct("listen_time").alias("total_streams")
 )
+
+# Calculate average listening time per user
+genre_kpi_df = genre_kpi_df.withColumn(
+    "avg_listening_time_per_user",
+    (col("total_listening_time") / col("unique_listeners")).cast("long")
+)
+
+# Identify top 3 songs per genre per day
+song_rank_window = Window.partitionBy("track_genre", "date").orderBy(desc("listen_time"))
+ranked_songs = joined_df.withColumn("rank", row_number().over(song_rank_window))
+top_3_songs_df = ranked_songs.filter(col("rank") <= 3).select(
+    col("track_genre").alias("genre"), "date", "track_name", "rank"
+)
+
+# Identify top 5 genres per day
+genre_rank_window = Window.partitionBy("date").orderBy(desc("total_streams"))
+top_genres_df = genre_kpi_df.withColumn("genre_rank", row_number().over(genre_rank_window))
+top_5_genres_df = top_genres_df.filter(col("genre_rank") <= 5).select(
+    col("track_genre").alias("genre"), "date", "total_streams", "genre_rank"
+)
