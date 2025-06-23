@@ -45,3 +45,28 @@ def ensure_table_exists(name, schema):
         waiter.wait(TableName=name)
         logger.info(f"Table {name} is ready.")
 
+def sanitize_value(v):
+    """
+    Sanitizes a given value 'v' for data processing, handling NaN/null values,
+    converting floats to integers, and ensuring all other values are strings.
+
+    Args:
+        v: The input value to be sanitized. It can be of various types,
+           including pandas NaN, float, int, or string.
+
+    Returns:
+        None if the input value is null or NaN.
+        An integer if the input value is a float (after converting it to an int).
+        A string representation for all other non-null, non-NaN values.
+    """
+    if pd.isnull(v) or (isinstance(v, float) and math.isnan(v)):
+        return None
+    if isinstance(v, float):
+        return int(v)
+    return str(v)
+
+def extract_partition_date(key):
+    match = re.search(r"date=([\d\-]+)/", key)
+    if match:
+        return match.group(1)
+    return None
