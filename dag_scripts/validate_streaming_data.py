@@ -42,3 +42,30 @@ def infer_file_type(key):
     elif 'users' in key: return 'users'
     return None
 
+
+# File validation logic to check schema compliance and move valid/invalid files in s3
+def validate_file(key, invalid_entries):
+    file_type = infer_file_type(key)
+    if not file_type:
+        logger.warning(f"Skipping unrecognized file: {key}")
+        return
+
+    # Check if the file type has a required schema
+    expected = REQUIRED_SCHEMAS[file_type]
+    obj = s3.get_object(Bucket=BUCKET, Key=key)
+    df = pd.read_csv(BytesIO(obj['Body'].read()))
+
+    # Check if all expected columns are present
+    missing = [col for col in expected if col not in df.columns]
+    if missing:
+        logger.error(f"{key} is missing: {missing}")
+        s3.copy_object(Bucket=BUCKET, CopySource={'Bucket': BUCKET, 'Key': key}, Key=LOG_PREFIX + os.path.basename(key))
+        s3.delete_object(Bucket=BUCKET, Key=key)
+        invalid_entries.append(f"{key} missing: {missing}")
+    else:
+        validated_key = VALIDATED_PREFIX + os.path.basename(key)
+        archive_key = ARCHIVE_PREFIX + os.path.basename(key)
+        s3.copy_object(Bucket=BUCKET, CopySource={'Bucket': BUCKET, 'Key': key}, Key=validated_key)
+        s3.copy_object(Bucket=BUCKET, CopySource={'Bucket': BUCKET, 'Key': key}, Key=archive_key)
+        s3.delete_object(Bucket=BUCKET, Key=key)
+        logger.info(f"{key} passed validation and moved to {validated_key} and archived to {archive_key}")
