@@ -92,3 +92,14 @@ dag = DAG(
     description='ETL pipeline for music streaming genre KPIs to DynamoDB',
 )
 
+
+wait_for_data = S3KeySensor( 
+    task_id='wait_for_new_data', # Wait for new CSV files in S3
+    bucket_key='incoming/*.csv', # S3 bucket key pattern to match
+    bucket_name='music-stream-data-dynamo',
+    wildcard_match=True, # Enable wildcard matching
+    aws_conn_id='aws_default', # Airflow connection ID for AWS
+    poke_interval=60, # Check every 60 seconds
+    timeout=3600, # How long to wait for new data (1 hour)
+    dag=dag
+)
