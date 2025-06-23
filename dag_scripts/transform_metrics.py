@@ -63,3 +63,32 @@ top_genres_df = genre_kpi_df.withColumn("genre_rank", row_number().over(genre_ra
 top_5_genres_df = top_genres_df.filter(col("genre_rank") <= 5).select(
     col("track_genre").alias("genre"), "date", "total_streams", "genre_rank"
 )
+
+# Final result for DynamoDB
+final_df = genre_kpi_df.select(
+    col("track_genre").alias("genre"),
+    "date",
+    "total_streams",
+    "unique_listeners",
+    "total_listening_time",
+    "avg_listening_time_per_user"
+)
+
+logger.info("Writing final KPI metrics to S3")
+# Use partitionBy("date") to keep daily partitions and overwrite only that day's data
+final_df.write.partitionBy("date").mode("overwrite").option("header", True).csv(f"s3://{BUCKET}/curated/genre_kpis.csv")
+top_3_songs_df.write \
+    .partitionBy("date") \
+    .mode("overwrite") \
+    .option("header", True) \
+    .option("quote", '"') \
+    .option("escape", '"') \
+    .option("multiLine", False) \
+    .csv(f"s3://{BUCKET}/curated/top_3_songs.csv")
+top_5_genres_df.write.partitionBy("date").mode("overwrite").option("header", True).csv(f"s3://{BUCKET}/curated/top_5_genres.csv")
+
+logger.info("Transformation Complete")
+
+if __name__ == "__main__":
+    logger.info("Starting transformation script")
+    logger.info("Transformation script completed")
