@@ -69,3 +69,23 @@ def validate_file(key, invalid_entries):
         s3.copy_object(Bucket=BUCKET, CopySource={'Bucket': BUCKET, 'Key': key}, Key=archive_key)
         s3.delete_object(Bucket=BUCKET, Key=key)
         logger.info(f"{key} passed validation and moved to {validated_key} and archived to {archive_key}")
+
+# function for main validation runner to process incoming s3 files and generate a report for schema violations
+def main():
+    logger.info("Starting validation of incoming files")
+    # Ensure the log directory exists
+    files = list_files()
+    if not files:
+        logger.warning("No incoming files to validate")
+        return
+    # Create the log directory if it doesn't exist
+    invalid_entries = []
+    for key in files:
+        validate_file(key, invalid_entries)
+    # Generate a report of invalid entries
+    if invalid_entries:
+        report_body = '\n'.join(invalid_entries)
+        s3.put_object(Bucket=BUCKET, Key=LOG_PREFIX + 'report.txt', Body=report_body.encode('utf-8'))
+        logger.warning("Validation report written to logs/invalid/report.txt")
+    else:
+        logger.info("All incoming files passed schema validation.")
