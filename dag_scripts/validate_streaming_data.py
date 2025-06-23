@@ -27,3 +27,12 @@ REQUIRED_SCHEMAS = {
     'streams': ['user_id', 'track_id', 'listen_time'],
     'users': ['user_id', 'user_name', 'user_age', 'user_country', 'created_at']
 }
+
+
+# Function to list incoming files with input prefix
+def list_files():
+    response = s3.list_objects_v2(Bucket=BUCKET, Prefix=INPUT_PREFIX)
+    return [obj['Key'] for obj in response.get('Contents', []) if obj['Key'].endswith('.csv')]
+
+
+
