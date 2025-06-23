@@ -149,3 +149,8 @@ def main(): # Main function to load data into DynamoDB
     for table_name, s3_prefix in FILES.items(): # Iterate over each table and its corresponding S3 prefix
         ensure_table_exists(table_name, table_schemas[table_name]) # Ensure the table exists
         load_csv_to_dynamodb(table_name, s3_prefix) # Load the CSV data into DynamoDB
+
+if __name__ == "__main__":
+    logger.info("Starting DynamoDB loading script")
+    main()
+    logger.info("DynamoDB loading completed")
