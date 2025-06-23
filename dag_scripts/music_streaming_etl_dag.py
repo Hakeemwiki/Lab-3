@@ -77,5 +77,18 @@ def check_validation():
     logger.info("No validation errors found. Proceeding to transformation.")
     return 'transform_metrics'
 
+default_args = {
+    'owner': 'hakeem',
+    'start_date': datetime(2024, 1, 1),
+    'retries': 1,
+}
 
+dag = DAG(
+    dag_id='music_streaming_etl_pipeline',
+    default_args=default_args,
+    schedule_interval=timedelta(minutes=15), # Changed schedule to every 15 minutes
+    #schedule_interval=None,
+    catchup=False,
+    description='ETL pipeline for music streaming genre KPIs to DynamoDB',
+)
 
