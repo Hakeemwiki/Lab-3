@@ -72,3 +72,41 @@ def extract_partition_date(key):
     if match:
         return match.group(1)
     return None
+
+
+def load_csv_to_dynamodb(table_name, prefix):
+    logger.info(f"Searching for CSVs in {prefix} on S3")
+    response = s3.list_objects_v2(Bucket=BUCKET, Prefix=prefix)
+    if 'Contents' not in response:
+        logger.warning(f"No files found under {prefix}, skipping.")
+        return
+
+    # Filter for CSV files and part files
+    csv_files = [obj['Key'] for obj in response['Contents'] if obj['Key'].endswith('.csv') or 'part' in obj['Key']]
+    if not csv_files:
+        logger.warning(f"No part files found in {prefix}, skipping.")
+        return
+
+    for csv_key in sorted(csv_files):
+        logger.info(f"Reading {csv_key} from S3")
+        response = s3.get_object(Bucket=BUCKET, Key=csv_key) # Get the CSV file from S3
+        df = pd.read_csv(response['Body'])
+
+        # Extract partitioned date from path if missing in DataFrame
+        if 'date' not in df.columns:
+            extracted_date = extract_partition_date(csv_key) # Extract date from the S3 key
+            if extracted_date:
+                df['date'] = extracted_date # Add the extracted date as a new column
+            else:
+                logger.error("Missing 'date' column and could not extract from path. Skipping file.")
+                continue
+
+        df.drop_duplicates(inplace=True)
+        table = dynamodb.Table(table_name) # Get the DynamoDB table object
+        logger.info(f"Inserting into {table_name}")
+
+        for _, row in df.iterrows(): # Iterate over each row in the DataFrame
+            item = {k: sanitize_value(v) for k, v in row.items() if sanitize_value(v) is not None} # Sanitize each value
+            table.put_item(Item=item) # Insert the sanitized item into DynamoDB
+
+        logger.info(f"Loaded {len(df)} records into {table_name}")
