@@ -23,3 +23,25 @@ FILES = {
     'top_3_songs': 'curated/top_3_songs.csv/',
     'top_5_genres': 'curated/top_5_genres.csv/'
 }
+
+# Ensure tables create if they do not exist
+def ensure_table_exists(name, schema):
+    # Check if the table already exists
+    existing_tables = dynamodb_client.list_tables()['TableNames']
+    if name not in existing_tables:
+        logger.info(f"Creating DynamoDB table: {name}")
+        dynamodb_client.create_table(
+            TableName=name,
+            KeySchema=schema['KeySchema'], # Define the primary key schema
+            AttributeDefinitions=schema['AttributeDefinitions'], # Define the attribute definitions
+            BillingMode='PAY_PER_REQUEST', # Use on-demand billing mode
+            StreamSpecification={
+                'StreamEnabled': True, # Enable streaming
+                'StreamViewType': 'NEW_AND_OLD_IMAGES' # Stream both new and old images
+            }
+        )
+        # Wait for the table to be created
+        waiter = dynamodb_client.get_waiter('table_exists')
+        waiter.wait(TableName=name)
+        logger.info(f"Table {name} is ready.")
+
