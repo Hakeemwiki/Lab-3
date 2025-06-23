@@ -66,6 +66,8 @@ def sanitize_value(v):
     return str(v)
 
 def extract_partition_date(key):
+    """
+    Extracts the date from the S3 key if it follows the pattern 'date=YYYY-MM-DD/'."""
     match = re.search(r"date=([\d\-]+)/", key)
     if match:
         return match.group(1)
