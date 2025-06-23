@@ -62,5 +62,20 @@ def archive_processed_files():
             s3_client.delete_object(Bucket=bucket, Key=key) # Delete the original file after copying it to the archive
             logger.info(f"Archived: {key}")
 
+def check_validation():
+    # Checks for validation errors in S3 and returns the next task based on the result.
+    logger.info("Checking for validation errors in S3")
+    s3 = boto3.client('s3')
+    result = s3.list_objects_v2(Bucket='music-stream-data-dynamo', Prefix='logs/invalid/') # List objects in the S3 bucket under the 'logs/invalid/' prefix
+    if 'Contents' in result: # If there are any objects in the 'logs/invalid/' prefix, it indicates validation errors
+        issue_files = [obj['Key'] for obj in result['Contents'] if obj['Key'] != 'logs/invalid/' and not obj['Key'].endswith('/')]
+        if issue_files: # If there are any issue files, log them and return 'end_pipeline'
+            logger.warning(f"Validation failed: Found {len(issue_files)} issue file(s):")
+            for key in issue_files:
+                logger.warning(f" - {key}")
+            return 'end_pipeline'
+    logger.info("No validation errors found. Proceeding to transformation.")
+    return 'transform_metrics'
+
 
 
