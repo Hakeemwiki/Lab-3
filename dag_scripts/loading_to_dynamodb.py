@@ -110,3 +110,42 @@ def load_csv_to_dynamodb(table_name, prefix):
             table.put_item(Item=item) # Insert the sanitized item into DynamoDB
 
         logger.info(f"Loaded {len(df)} records into {table_name}")
+
+
+def main(): # Main function to load data into DynamoDB
+    table_schemas = {
+        'genre_metrics': {
+            'KeySchema': [
+                {'AttributeName': 'genre', 'KeyType': 'HASH'},
+                {'AttributeName': 'date', 'KeyType': 'RANGE'}
+            ],
+            'AttributeDefinitions': [
+                {'AttributeName': 'genre', 'AttributeType': 'S'},
+                {'AttributeName': 'date', 'AttributeType': 'S'}
+            ]
+        },
+        'top_3_songs': {
+            'KeySchema': [
+                {'AttributeName': 'genre', 'KeyType': 'HASH'},
+                {'AttributeName': 'date', 'KeyType': 'RANGE'}
+            ],
+            'AttributeDefinitions': [
+                {'AttributeName': 'genre', 'AttributeType': 'S'},
+                {'AttributeName': 'date', 'AttributeType': 'S'}
+            ]
+        },
+        'top_5_genres': {
+            'KeySchema': [
+                {'AttributeName': 'date', 'KeyType': 'HASH'},
+                {'AttributeName': 'genre', 'KeyType': 'RANGE'}
+            ],
+            'AttributeDefinitions': [
+                {'AttributeName': 'date', 'AttributeType': 'S'},
+                {'AttributeName': 'genre', 'AttributeType': 'S'}
+            ]
+        }
+    }
+
+    for table_name, s3_prefix in FILES.items(): # Iterate over each table and its corresponding S3 prefix
+        ensure_table_exists(table_name, table_schemas[table_name]) # Ensure the table exists
+        load_csv_to_dynamodb(table_name, s3_prefix) # Load the CSV data into DynamoDB
