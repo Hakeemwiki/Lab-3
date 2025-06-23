@@ -1,6 +1,6 @@
-# 🎵 Real-Time Music Streaming Analytics Pipeline on AWS
+# Real-Time Music Streaming Analytics Pipeline on AWS
 
-> ** Purpose**: Implement a scalable, event-driven ETL pipeline on AWS to process music streaming data from S3, validate it, compute daily genre-level KPIs, and store results in DynamoDB for real-time analytics and application consumption.
+Purpose: Implement a scalable, event-driven ETL pipeline on AWS to process music streaming data from S3, validate it, compute daily genre-level KPIs, and store results in DynamoDB for real-time analytics and application consumption.
 
 ---
 
