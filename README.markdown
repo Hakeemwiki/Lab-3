@@ -79,7 +79,8 @@ Raw data is stored in Amazon S3 under the prefix `s3://music-streaming-data/inco
 The pipeline leverages AWS services to create a modular, serverless, and scalable ETL workflow.
 
 ### Architecture Diagram
-![alt text](docs/Lab3-Architecture.png)
+
+![alt text](docs/lab-3-architecture-2.png)
 
 ### Key Components:
 
