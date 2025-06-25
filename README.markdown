@@ -80,7 +80,7 @@ The pipeline leverages AWS services to create a modular, serverless, and scalabl
 
 ### Architecture Diagram
 
-![alt text](docs/lab-3-architecture-2.png)
+![alt text](docs/lab3-Mwaa.drawio.svg)
 
 ### Key Components:
 
